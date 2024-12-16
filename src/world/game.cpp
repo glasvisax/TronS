@@ -41,6 +41,20 @@ void Game::Update(float deltaTime)
 			snake1.Update(gridSize);
 			snake2.Update(gridSize);
 
+			// Сначала проверяем столкновения между змейками
+			if (CheckSnakesCollision(result)) {
+				StopGameMsg msg;
+				msg.result = result;
+				gameOver = true;
+				state = GameState::Pause;
+				lastRender = true;
+				sendGameStateMsg();
+				networkManager.sendStopGame(&msg);
+				onGameOver(result);
+				return;
+			}
+
+			// Затем проверяем самостолкновения
 			if (snake1.CheckCollision()) {
 				StopGameMsg msg;
 				gameOver = true;
@@ -59,7 +73,6 @@ void Game::Update(float deltaTime)
 				gameOver = true;
 				result = GameResult::Snake1;
 				state = GameState::Pause;
-				msg.result = result;
 				lastRender = true;
 				msg.result = result;
 				sendGameStateMsg();
@@ -68,17 +81,6 @@ void Game::Update(float deltaTime)
 				return;
 			}
 
-			if (CheckSnakesCollision(result)) {
-				StopGameMsg msg;
-				msg.result = result;
-				gameOver = true;
-				state = GameState::Pause;
-				lastRender = true;
-				sendGameStateMsg();
-				networkManager.sendStopGame(&msg);
-				onGameOver(result);
-				return;
-			}
 			if (snake1.HasEatenApple(applePosition)) {
 				snake1.AddBodyPart(snake1.GetBodyParts().back());
 				spawnApple();
@@ -295,26 +297,29 @@ bool Game::CheckSnakesCollision(GameResult& gameResult) const
     const auto& snake2Parts = snake2.GetBodyParts();
     
     const auto& snake1Head = snake1Parts.front();
-	const auto& snake2Head = snake2Parts.front();
+    const auto& snake2Head = snake2Parts.front();
+    
+    // Проверяем случай, когда змейки пытаются поменяться местами или сталкиваются головами
+    if (snake1Head == snake2Head || 
+        (snake1Parts.size() > 1 && snake2Parts.size() > 1 && 
+         snake1Head == snake2Parts[1] && snake2Head == snake1Parts[1])) {
+        gameResult = GameResult::Tie;
+        return true;
+    }
+    
+    // Проверяем столкновение головы первой змейки с телом второй
     for (const auto& part : snake2Parts) {
         if (snake1Head == part) {
-			if (part == snake2Head) {
-				gameResult = GameResult::Tie;
-			} else {
-				gameResult = GameResult::Snake2;
-			}
-			return true;
+            gameResult = GameResult::Snake2;
+            return true;
         }
     }
     
+    // Проверяем столкновение головы второй змейки с телом первой
     for (const auto& part : snake1Parts) {
         if (snake2Head == part) {
-			if (part == snake1Head) {
-				gameResult = GameResult::Tie;
-			} else {
-				gameResult = GameResult::Snake1;
-			}
-			return true;
+            gameResult = GameResult::Snake1;
+            return true;
         }
     }
     
