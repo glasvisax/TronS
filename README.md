@@ -3,10 +3,10 @@
 A C++ implementation of the classic Tron game with network multiplayer support.
 
 ## Screenshots
-![Gameplay](images/gameplay.png)
-![Menu](images/menu.png)
-![GameOver](images/gameover.png)
-![Lobby](images/lobby.png)
+![Gameplay](images/gameplay.jpg)
+![Menu](images/menu.jpg)
+![GameOver](images/gameover.jpg)
+![Lobby](images/lobby.jpg)
 
 ## Features
 - OpenGL-based graphics rendering
